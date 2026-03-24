@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitPal — AI-Powered Git Assistant</title>
+  <!--
+    Twemoji: Twitter's open-source emoji library.
+    Converts all Unicode emoji characters into crisp SVG images served from
+    a CDN, so they render identically on every OS, browser and device —
+    no more blank boxes or inconsistent glyphs.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-code:   #0d1117;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --accent3:   #d29922;
+      --accent4:   #f85149;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --radius:    10px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── Twemoji: make all emoji images inline ── */
+    img.emoji {
+      height: 1.2em;
+      width:  1.2em;
+      vertical-align: -0.2em;
+      display: inline-block;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+      background: radial-gradient(ellipse at 50% 0%, rgba(88,166,255,0.12) 0%, transparent 70%);
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(88,166,255,0.1);
+      border: 1px solid rgba(88,166,255,0.3);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1.2rem;
+      background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-primary { background: var(--accent); color: #0d1117; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Install box ── */
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1.2rem;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.9rem;
+      margin-top: 2rem;
+      color: var(--accent2);
+    }
+    .install-box span.dollar { color: var(--text-muted); user-select: none; }
+
+    /* ── Section ── */
+    section { padding: 4rem 2rem; max-width: 1100px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .section-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 0.95rem;
+    }
+
+    /* ── Problem / Solution strip ── */
+    .problem-strip {
+      background: rgba(248,81,73,0.06);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .solution-strip {
+      background: rgba(63,185,80,0.06);
+      border: 1px solid rgba(63,185,80,0.2);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+    }
+    .strip-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .problem-strip .strip-label { color: var(--accent4); }
+    .solution-strip .strip-label { color: var(--accent2); }
+
+    /* ── Command cards grid ── */
+    .commands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .cmd-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .cmd-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(88,166,255,0.15);
+    }
+
+    .cmd-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .cmd-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .icon-blue   { background: rgba(88,166,255,0.15); }
+    .icon-green  { background: rgba(63,185,80,0.15); }
+    .icon-yellow { background: rgba(210,153,34,0.15); }
+    .icon-red    { background: rgba(248,81,73,0.15); }
+    .icon-purple { background: rgba(188,140,255,0.15); }
+    .icon-teal   { background: rgba(56,189,248,0.15); }
+
+    .cmd-title {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .cmd-tag {
+      margin-left: auto;
+      background: rgba(88,166,255,0.1);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 0.15rem 0.55rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .cmd-desc {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+
+    .token-comment { color: #8b949e; }
+    .token-command { color: #79c0ff; }
+    .token-output  { color: #3fb950; }
+    .token-prompt  { color: #d29922; }
+
+    /* ── Providers table ── */
+    .providers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .provider-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+    }
+    .provider-name  { font-weight: 700; margin-bottom: 0.25rem; }
+    .provider-model { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.6rem; }
+    .provider-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+    }
+    .badge-free    { background: rgba(63,185,80,0.15);  color: var(--accent2); }
+    .badge-fast    { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-paid    { background: rgba(210,153,34,0.15); color: var(--accent3); }
+
+    /* ── Comparison table ── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .compare-table th,
+    .compare-table td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .compare-table th {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .compare-table .bad  { color: var(--text-muted); }
+    .compare-table .good { color: var(--accent2); font-weight: 500; }
+
+    /* ── Workflow ── */
+    .workflow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 540px;
+    }
+
+    .wf-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .wf-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 19px;
+      top: 40px;
+      bottom: -8px;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .wf-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      z-index: 1;
+      margin-bottom: 8px;
+    }
+
+    .wf-content { padding-top: 0.5rem; padding-bottom: 1.5rem; }
+    .wf-title  { font-weight: 600; margin-bottom: 0.2rem; }
+    .wf-detail { color: var(--text-muted); font-size: 0.875rem; }
+    .wf-cmd    {
+      display: inline-block;
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.15rem 0.6rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 0.35rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      section { padding: 3rem 1rem; }
+      .hero { padding: 3.5rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <a class="nav-logo" href="#">🤖 GitPal</a>
+  <ul class="nav-links">
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#providers">Providers</a></li>
+    <li><a href="#workflow">Workflow</a></li>
+    <li><a href="https://github.com/www-infinity4/Clone-of-Gitpal">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-badge">AI-Powered Git CLI</div>
+  <h1>Stop writing<br>commit messages manually</h1>
+  <p>GitPal reads your actual code changes and writes the perfect commit message — every time. Plus PR descriptions, changelogs, summaries and AI code review.</p>
+
+  <div class="hero-buttons">
+    <a href="#commands" class="btn btn-primary">🚀 See all commands</a>
+    <a href="https://github.com/www-infinity4/Clone-of-Gitpal" class="btn btn-secondary">⭐ Star on GitHub</a>
+  </div>
+
+  <div class="install-box">
+    <span class="dollar">$</span> npm install -g gitpal-cli
+  </div>
+</header>
+
+<hr class="divider" />
+
+<!-- ── Problem / Solution ── -->
+<section>
+  <h2 class="section-title">😤 The Problem Every Developer Faces</h2>
+  <p class="section-subtitle">Your git log becomes a graveyard of meaningless messages.</p>
+
+  <div class="problem-strip">
+    <div class="strip-label">❌ Without GitPal</div>
+    <pre><code><span class="token-comment"># You just coded for 2 hours and now...</span>
+<span class="token-command">git add .</span>
+<span class="token-command">git commit -m "fix"</span>        <span class="token-comment"># 😭 lazy and meaningless</span>
+<span class="token-command">git commit -m "changes"</span>    <span class="token-comment"># 😭 tells nothing</span>
+<span class="token-command">git commit -m "update"</span>     <span class="token-comment"># 😭 useless history</span></code></pre>
+  </div>
+
+  <div class="solution-strip">
+    <div class="strip-label">✅ With GitPal</div>
+    <pre><code><span class="token-command">git add .</span>
+<span class="token-command">gitpal commit</span>
+
+<span class="token-output">✔ Staged changes found.
+✔ Commit message generated!
+
+  Suggested: feat(auth): add bcrypt password hashing to login endpoint
+
+? Use this message? › Yes
+✅ Committed successfully!</span></code></pre>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── Commands ── -->
+<section id="commands">
+  <h2 class="section-title">📖 All Commands</h2>
+  <p class="section-subtitle">Six powerful commands to supercharge your Git workflow.</p>
+
+  <div class="commands-grid">
+
+    <!-- commit -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-blue">✏️</div>
+        <div class="cmd-title">gitpal commit</div>
+        <div class="cmd-tag">commit</div>
+      </div>
+      <p class="cmd-desc">Reads your staged diff and generates a meaningful conventional commit message using AI.</p>
+      <pre><code><span class="token-command">git add src/payment.js</span>
+<span class="token-command">gitpal commit</span>
+
+<span class="token-output">✔ Commit message generated!
+  feat(payment): integrate Razorpay
+? Use this message? Yes ✅</span></code></pre>
+    </div>
+
+    <!-- review -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-red">🔍</div>
+        <div class="cmd-title">gitpal review</div>
+        <div class="cmd-tag">review</div>
+      </div>
+      <p class="cmd-desc">AI reviews your staged code for bugs, security issues, and bad practices before you commit.</p>
+      <pre><code><span class="token-command">git add .
+gitpal review</span>
+
+<span class="token-output">🐛 Bugs Found:
+  - No error handling on login fail
+🔒 Security Issues:
+  - Password stored as plain text
+❌ Verdict: Do not commit</span></code></pre>
+    </div>
+
+    <!-- summary -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-green">📋</div>
+        <div class="cmd-title">gitpal summary</div>
+        <div class="cmd-tag">summary</div>
+      </div>
+      <p class="cmd-desc">Summarizes your recent commits in plain English so you always know what you built.</p>
+      <pre><code><span class="token-command">gitpal summary --last 7</span>
+
+<span class="token-output">📋 Summary of last 7 commits:
+• Built user auth with JWT tokens
+• Integrated Razorpay gateway
+• Fixed cart total calculation
+• Added dark mode to dashboard</span></code></pre>
+    </div>
+
+    <!-- pr -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-purple">📝</div>
+        <div class="cmd-title">gitpal pr</div>
+        <div class="cmd-tag">pr</div>
+      </div>
+      <p class="cmd-desc">Generates a complete PR description from your branch diff. Copy-paste straight into GitHub.</p>
+      <pre><code><span class="token-command">gitpal pr --base main</span>
+
+<span class="token-output">📝 Pull Request Description:
+
+## What changed
+- Integrated Razorpay payment
+- Added webhook handler
+
+## Why
+- App needed real payment processing</span></code></pre>
+    </div>
+
+    <!-- changelog -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-yellow">📄</div>
+        <div class="cmd-title">gitpal changelog</div>
+        <div class="cmd-tag">changelog</div>
+      </div>
+      <p class="cmd-desc">Auto-generates a formatted CHANGELOG entry from your commit history.</p>
+      <pre><code><span class="token-command">gitpal changelog --ver 2.0.0</span>
+
+<span class="token-output">📄 CHANGELOG v2.0.0:
+
+## [2.0.0] - 2026-03-24
+### Features
+- Payment gateway integration
+### Bug Fixes
+- Fixed cart calculation</span></code></pre>
+    </div>
+
+    <!-- config -->
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <div class="cmd-icon icon-teal">⚙️</div>
+        <div class="cmd-title">gitpal config</div>
+        <div class="cmd-tag">config</div>
+      </div>
+      <p class="cmd-desc">Interactive setup to configure your AI provider and API key. One-time setup, then you're done.</p>
+      <pre><code><span class="token-command">gitpal config</span>
+
+<span class="token-prompt">? Choose your AI provider:
+❯ Groq — llama3 (Free & Fast)
+  Anthropic (Claude)
+  OpenAI (GPT-3.5)
+  Google Gemini</span>
+
+<span class="token-output">✅ Configuration saved!</span></code></pre>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── Providers ── -->
+<section id="providers">
+  <h2 class="section-title">🤖 Supports 4 AI Providers</h2>
+  <p class="section-subtitle">Pick any one — all work perfectly. Recommended: Groq (completely free).</p>
+
+  <div class="providers-grid">
+
+    <div class="provider-card">
+      <div class="provider-name">⚡ Groq</div>
+      <div class="provider-model">llama-3.3-70b-versatile</div>
+      <div class="provider-badges">
+        <span class="badge badge-free">Free</span>
+        <span class="badge badge-fast">Fastest</span>
+      </div>
+    </div>
+
+    <div class="provider-card">
+      <div class="provider-name">🌟 Google Gemini</div>
+      <div class="provider-model">gemini-pro</div>
+      <div class="provider-badges">
+        <span class="badge badge-free">Free tier</span>
+        <span class="badge badge-fast">Fast</span>
+      </div>
+    </div>
+
+    <div class="provider-card">
+      <div class="provider-name">🧠 Anthropic</div>
+      <div class="provider-model">claude-3-haiku</div>
+      <div class="provider-badges">
+        <span class="badge badge-paid">Free credits</span>
+        <span class="badge badge-fast">Fast</span>
+      </div>
+    </div>
+
+    <div class="provider-card">
+      <div class="provider-name">🔮 OpenAI</div>
+      <div class="provider-model">gpt-3.5-turbo</div>
+      <div class="provider-badges">
+        <span class="badge badge-paid">Paid</span>
+        <span class="badge badge-fast">Fast</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── Comparison ── -->
+<section id="compare">
+  <h2 class="section-title">💡 Why GitPal?</h2>
+  <p class="section-subtitle">The difference is night and day.</p>
+
+  <div style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Without GitPal</th>
+          <th>With GitPal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="bad">git commit -m "fix"</td>
+          <td class="good">feat(auth): add JWT token refresh logic</td>
+        </tr>
+        <tr>
+          <td class="bad">Spend 15 mins on PR description</td>
+          <td class="good">Generated in 3 seconds</td>
+        </tr>
+        <tr>
+          <td class="bad">Forget what you built last week</td>
+          <td class="good">Plain English summary instantly</td>
+        </tr>
+        <tr>
+          <td class="bad">Write changelog manually</td>
+          <td class="good">Auto-generated from commits</td>
+        </tr>
+        <tr>
+          <td class="bad">No code review before commit</td>
+          <td class="good">AI catches bugs before they reach GitHub</td>
+        </tr>
+        <tr>
+          <td class="bad">Works with one AI only</td>
+          <td class="good">Works with 4 AI providers</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── Workflow ── -->
+<section id="workflow">
+  <h2 class="section-title">🔄 Full Daily Workflow</h2>
+  <p class="section-subtitle">A real developer's day, powered by GitPal.</p>
+
+  <div class="workflow">
+    <div class="wf-step">
+      <div class="wf-dot">☀️</div>
+      <div class="wf-content">
+        <div class="wf-title">Open your project</div>
+        <div class="wf-detail">Morning, fresh branch, ready to code.</div>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">✍️</div>
+      <div class="wf-content">
+        <div class="wf-title">Write some code</div>
+        <div class="wf-detail">Build your feature, fix the bug, ship the thing.</div>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">🔍</div>
+      <div class="wf-content">
+        <div class="wf-title">AI checks for issues</div>
+        <div class="wf-detail">Let the AI catch bugs before they reach production.</div>
+        <span class="wf-cmd">git add . &amp;&amp; gitpal review</span>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">✅</div>
+      <div class="wf-content">
+        <div class="wf-title">Perfect commit message</div>
+        <div class="wf-detail">AI writes "feat(auth): add Google OAuth login" for you.</div>
+        <span class="wf-cmd">gitpal commit</span>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">📋</div>
+      <div class="wf-content">
+        <div class="wf-title">End of day summary</div>
+        <div class="wf-detail">"Built OAuth, fixed cart bug, added tests" — instantly.</div>
+        <span class="wf-cmd">gitpal summary</span>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">📝</div>
+      <div class="wf-content">
+        <div class="wf-title">Ready to merge?</div>
+        <div class="wf-detail">Full PR description in seconds, copy straight into GitHub.</div>
+        <span class="wf-cmd">gitpal pr</span>
+      </div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-dot">🚀</div>
+      <div class="wf-content">
+        <div class="wf-title">Releasing a version?</div>
+        <div class="wf-detail">Full changelog ready — no manual digging through commits.</div>
+        <span class="wf-cmd">gitpal changelog --ver 2.0.0</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── Quick Start ── -->
+<section id="install">
+  <h2 class="section-title">🚀 Quick Start</h2>
+  <p class="section-subtitle">Three commands and you're done.</p>
+
+  <pre><code><span class="token-comment"># 1. Install globally</span>
+<span class="token-command">npm install -g gitpal-cli</span>
+
+<span class="token-comment"># 2. Setup your AI provider (one time only — Groq is free!)</span>
+<span class="token-command">gitpal config</span>
+
+<span class="token-comment"># 3. Use in any project</span>
+<span class="token-command">cd your-project
+git add .
+gitpal commit</span></code></pre>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>Built with ❤️ &nbsp;·&nbsp; <a href="https://github.com/www-infinity4/Clone-of-Gitpal">GitHub</a> &nbsp;·&nbsp; MIT License</p>
+  <p style="margin-top:0.5rem; font-size:0.78rem;">Emojis rendered by <a href="https://twemoji.twitter.com/">Twemoji</a> (MIT) for consistent cross-platform display.</p>
+</footer>
+
+<script>
+  // ── Apply Twemoji to the entire document ──────────────────────────────────
+  // twemoji.parse() walks the DOM and replaces every Unicode emoji with an
+  // <img> tag pointing to a high-quality SVG served from jsDelivr CDN.
+  // This guarantees identical, crisp emoji rendering on Windows, macOS,
+  // Linux, Android, and every browser — no system font required.
+  // Falls back gracefully to native Unicode emojis if the CDN is unavailable.
+  if (typeof twemoji !== 'undefined') {
+    twemoji.parse(document.body, {
+      folder: 'svg',
+      ext: '.svg',
+      // Use jsDelivr CDN mirror for reliability
+      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
+    });
+  }
+</script>
+
+</body>
+</html>
