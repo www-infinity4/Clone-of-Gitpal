@@ -776,12 +776,15 @@ gitpal commit</span></code></pre>
   // <img> tag pointing to a high-quality SVG served from jsDelivr CDN.
   // This guarantees identical, crisp emoji rendering on Windows, macOS,
   // Linux, Android, and every browser — no system font required.
-  twemoji.parse(document.body, {
-    folder: 'svg',
-    ext: '.svg',
-    // Use jsDelivr CDN mirror for reliability
-    base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
-  });
+  // Falls back gracefully to native Unicode emojis if the CDN is unavailable.
+  if (typeof twemoji !== 'undefined') {
+    twemoji.parse(document.body, {
+      folder: 'svg',
+      ext: '.svg',
+      // Use jsDelivr CDN mirror for reliability
+      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
+    });
+  }
 </script>
 
 </body>
