@@ -44,7 +44,7 @@ program
 
 program
   .command('config')
-  .description('Configure your AI provider and API key')
+  .description('Configure the Rogers AI gateway')
   .action(configCommand);
 
 program
