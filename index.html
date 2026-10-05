@@ -572,14 +572,11 @@ gitpal review</span>
         <div class="cmd-title">gitpal config</div>
         <div class="cmd-tag">config</div>
       </div>
-      <p class="cmd-desc">Interactive setup to configure your AI provider and API key. One-time setup, then you're done.</p>
+      <p class="cmd-desc">Configure the existing Rogers AI gateway. No external provider key, signup, credit card, or paid API is required.</p>
       <pre><code><span class="token-command">gitpal config</span>
 
-<span class="token-prompt">? Choose your AI provider:
-❯ Groq — llama3 (Free & Fast)
-  Anthropic (Claude)
-  OpenAI (GPT-3.5)
-  Google Gemini</span>
+<span class="token-prompt">? Rogers AI gateway:
+https://infinity-rogers.marvaseater.workers.dev/v1/chat</span>
 
 <span class="token-output">✅ Configuration saved!</span></code></pre>
     </div>
@@ -591,47 +588,17 @@ gitpal review</span>
 
 <!-- ── Providers ── -->
 <section id="providers">
-  <h2 class="section-title">🤖 Supports 4 AI Providers</h2>
-  <p class="section-subtitle">Pick any one — all work perfectly. Recommended: Groq (completely free).</p>
-
+  <h2 class="section-title">🤖 Rogers AI</h2>
+  <p class="section-subtitle">GitPal uses the same Rogers AI gateway as the Phi system. No separate AI provider account or API key is requested.</p>
   <div class="providers-grid">
-
     <div class="provider-card">
-      <div class="provider-name">⚡ Groq</div>
-      <div class="provider-model">llama-3.3-70b-versatile</div>
+      <div class="provider-name">Rogers AI</div>
+      <div class="provider-model">Infinity AI gateway</div>
       <div class="provider-badges">
-        <span class="badge badge-free">Free</span>
-        <span class="badge badge-fast">Fastest</span>
+        <span class="badge badge-free">No user API key</span>
+        <span class="badge badge-fast">Shared Phi route</span>
       </div>
     </div>
-
-    <div class="provider-card">
-      <div class="provider-name">🌟 Google Gemini</div>
-      <div class="provider-model">gemini-pro</div>
-      <div class="provider-badges">
-        <span class="badge badge-free">Free tier</span>
-        <span class="badge badge-fast">Fast</span>
-      </div>
-    </div>
-
-    <div class="provider-card">
-      <div class="provider-name">🧠 Anthropic</div>
-      <div class="provider-model">claude-3-haiku</div>
-      <div class="provider-badges">
-        <span class="badge badge-paid">Free credits</span>
-        <span class="badge badge-fast">Fast</span>
-      </div>
-    </div>
-
-    <div class="provider-card">
-      <div class="provider-name">🔮 OpenAI</div>
-      <div class="provider-model">gpt-3.5-turbo</div>
-      <div class="provider-badges">
-        <span class="badge badge-paid">Paid</span>
-        <span class="badge badge-fast">Fast</span>
-      </div>
-    </div>
-
   </div>
 </section>
 
